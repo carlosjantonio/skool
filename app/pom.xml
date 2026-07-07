@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>ao.skool</groupId>
+        <artifactId>skool-parent</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+    <artifactId>app</artifactId>
+    <name>Skool :: app</name>
+    <description>Skool deployable — assembles all modules into one Spring Boot app.</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>ao.skool</groupId>
+            <artifactId>common-domain</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>ao.skool</groupId>
+            <artifactId>common-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>ao.skool</groupId>
+            <artifactId>common-security</artifactId>
+        </dependency>
+
+        <dependency><groupId>ao.skool</groupId><artifactId>identity</artifactId><version>${project.version}</version></dependency>
+        <dependency><groupId>ao.skool</groupId><artifactId>academic-structure</artifactId><version>${project.version}</version></dependency>
+        <dependency><groupId>ao.skool</groupId><artifactId>sis</artifactId><version>${project.version}</version></dependency>
+        <dependency><groupId>ao.skool</groupId><artifactId>staff</artifactId><version>${project.version}</version></dependency>
+        <dependency><groupId>ao.skool</groupId><artifactId>attendance</artifactId><version>${project.version}</version></dependency>
+        <dependency><groupId>ao.skool</groupId><artifactId>grading</artifactId><version>${project.version}</version></dependency>
+        <dependency><groupId>ao.skool</groupId><artifactId>assessment</artifactId><version>${project.version}</version></dependency>
+        <dependency><groupId>ao.skool</groupId><artifactId>assignments</artifactId><version>${project.version}</version></dependency>
+        <dependency><groupId>ao.skool</groupId><artifactId>forum</artifactId><version>${project.version}</version></dependency>
+        <dependency><groupId>ao.skool</groupId><artifactId>subject-board</artifactId><version>${project.version}</version></dependency>
+        <dependency><groupId>ao.skool</groupId><artifactId>fees</artifactId><version>${project.version}</version></dependency>
+        <dependency><groupId>ao.skool</groupId><artifactId>notifications</artifactId><version>${project.version}</version></dependency>
+        <dependency><groupId>ao.skool</groupId><artifactId>documents</artifactId><version>${project.version}</version></dependency>
+        <dependency><groupId>ao.skool</groupId><artifactId>reporting</artifactId><version>${project.version}</version></dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.tngtech.archunit</groupId>
+            <artifactId>archunit-junit5</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>skool</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>
