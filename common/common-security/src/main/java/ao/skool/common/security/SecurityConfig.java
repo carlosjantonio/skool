@@ -1,5 +1,7 @@
 package ao.skool.common.security;
 
+import ao.skool.common.security.jwt.JwtAuthenticationFilter;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -8,26 +10,25 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-/**
- * Minimal Phase-0 chain: stateless sessions, everything under /api/auth/** and public
- * endpoints permitted, everything else deferred to per-module authorization.
- * The identity module will replace the resource-server config with real JWT keys.
- */
 @Configuration
 @EnableMethodSecurity
+@EnableConfigurationProperties(JwtProperties.class)
 public class SecurityConfig {
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtFilter) throws Exception {
         http
             .csrf(csrf -> csrf.disable())
             .cors(cors -> {})
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/actuator/**", "/v3/api-docs/**", "/swagger-ui/**",
-                                 "/api/auth/login", "/api/auth/refresh").permitAll()
-                .anyRequest().permitAll() // Phase 0 — tighten in Phase 1 when identity ships
+                .requestMatchers("/actuator/health/**", "/actuator/info").permitAll()
+                .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                .requestMatchers("/api/auth/login", "/api/auth/refresh").permitAll()
+                .anyRequest().authenticated()
             );
         return http.build();
     }

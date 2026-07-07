@@ -50,5 +50,7 @@ skool:
   security:
     jwt:
       issuer: skool
+      # Dev default only. Override via SKOOL_JWT_SECRET in prod (min 32 bytes).
+      secret: ${SKOOL_JWT_SECRET:dev-only-secret-do-not-use-in-production-32bytes}
       access-token-ttl: PT30M
       refresh-token-ttl: P30D
