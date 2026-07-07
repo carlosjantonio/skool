@@ -47,6 +47,12 @@ skool:
   locale:
     default: pt-AO
     supported: pt-AO,en
+  storage:
+    minio:
+      endpoint: ${SKOOL_MINIO_ENDPOINT:http://localhost:9000}
+      access-key: ${SKOOL_MINIO_ACCESS_KEY:skool}
+      secret-key: ${SKOOL_MINIO_SECRET_KEY:skool-dev-secret}
+      bucket: ${SKOOL_MINIO_BUCKET:skool}
   security:
     jwt:
       issuer: skool
