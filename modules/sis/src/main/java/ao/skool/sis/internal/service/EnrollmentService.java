@@ -54,9 +54,12 @@ public class EnrollmentService {
     }
 
     @Transactional(readOnly = true)
-    public List<EnrollmentResponse> list(UUID academicYearId) {
-        return enrollments.findByTenantIdAndAcademicYearId(tenant.current().value(), academicYearId)
-                .stream().map(this::toResponse).toList();
+    public List<EnrollmentResponse> list(UUID academicYearId, UUID turmaId) {
+        var all = enrollments.findByTenantIdAndAcademicYearId(tenant.current().value(), academicYearId);
+        if (turmaId != null) {
+            all = all.stream().filter(e -> turmaId.equals(e.turmaId())).toList();
+        }
+        return all.stream().map(this::toResponse).toList();
     }
 
     private EnrollmentResponse toResponse(Enrollment e) {

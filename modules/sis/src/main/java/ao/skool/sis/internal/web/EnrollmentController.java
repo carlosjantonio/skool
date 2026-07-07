@@ -35,7 +35,8 @@ public class EnrollmentController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('" + Roles.ADMIN + "','" + Roles.DIRECTOR + "','" + Roles.SECRETARY + "','" + Roles.TEACHER + "')")
-    public List<EnrollmentResponse> list(@RequestParam UUID academicYearId) {
-        return service.list(academicYearId);
+    public List<EnrollmentResponse> list(@RequestParam UUID academicYearId,
+                                          @RequestParam(required = false) UUID turmaId) {
+        return service.list(academicYearId, turmaId);
     }
 }

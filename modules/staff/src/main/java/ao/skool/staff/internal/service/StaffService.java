@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -80,6 +81,17 @@ public class StaffService {
     @Transactional(readOnly = true)
     public List<AssignmentResponse> assignments(UUID academicYearId) {
         return assignments.findByTenantIdAndAcademicYearId(tenant.current().value(), academicYearId)
+                .stream().map(this::toResponse).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<StaffResponse> findByUserId(UUID userId) {
+        return staff.findByUserId(userId).map(this::toResponse);
+    }
+
+    @Transactional(readOnly = true)
+    public List<AssignmentResponse> assignmentsForStaff(UUID staffId, UUID academicYearId) {
+        return assignments.findByStaffIdAndAcademicYearId(staffId, academicYearId)
                 .stream().map(this::toResponse).toList();
     }
 

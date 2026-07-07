@@ -21,8 +21,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -42,9 +44,16 @@ public class AttendanceService {
     }
 
     /**
-     * Idempotent batch save. Records whose id is already stored are reported as skipped
-     * without touching the row. Records that violate the (student, turma, date)
-     * uniqueness constraint under a different id are reported as failed.
+     * Idempotent upsert. Records are keyed by their client-supplied {@link AttendanceEntry#id()};
+     * a new id inserts, a repeat id updates the same row. This lets the offline client
+     * change a student's status ("I marked them PRESENT then remembered they were LATE")
+     * without needing a separate PATCH endpoint. Retrying an unchanged batch after a
+     * partial send is still safe — the same values are written back and the request
+     * is reported as accepted, not failed.
+     * <p>
+     * The uniqueness constraint on {@code (student, turma, date)} still defends against
+     * a mis-behaving client that ships two different UUIDs for the same event — those
+     * are reported as {@code failed} rather than silently accepted.
      */
     public BatchResult ingest(BatchRequest request) {
         var tenantId = tenant.current();
@@ -52,25 +61,24 @@ public class AttendanceService {
 
         Set<UUID> incomingIds = new HashSet<>();
         for (var e : request.records()) incomingIds.add(e.id());
-        Set<UUID> existingIds = new HashSet<>(
-                attendance.findAllById(incomingIds).stream().map(AttendanceRecord::id).toList());
+        Map<UUID, AttendanceRecord> existingById = new HashMap<>();
+        for (var r : attendance.findAllById(incomingIds)) existingById.put(r.id(), r);
 
         List<UUID> accepted = new ArrayList<>();
-        List<UUID> skipped = new ArrayList<>();
+        List<UUID> skipped = List.of(); // no-op skips under upsert semantics
         List<FailedEntry> failed = new ArrayList<>();
 
         for (AttendanceEntry e : request.records()) {
-            if (existingIds.contains(e.id())) {
-                skipped.add(e.id());
-                continue;
-            }
-            AttendanceRecord record = new AttendanceRecord(
-                    e.id(), tenantId.value(), e.turmaId(), e.studentId(),
-                    e.date(), e.status(), e.notes(), actor);
+            AttendanceRecord existing = existingById.get(e.id());
+            boolean wasAbsentBefore = existing != null && existing.status() == AttendanceStatus.ABSENT;
+            AttendanceRecord record = existing != null
+                    ? updateExisting(existing, e, actor)
+                    : new AttendanceRecord(e.id(), tenantId.value(), e.turmaId(), e.studentId(),
+                            e.date(), e.status(), e.notes(), actor);
             try {
                 attendance.save(record);
                 accepted.add(e.id());
-                if (e.status() == AttendanceStatus.ABSENT) {
+                if (e.status() == AttendanceStatus.ABSENT && !wasAbsentBefore) {
                     events.publishEvent(new AttendanceMarkedAbsent(
                             UUID.randomUUID(), tenantId, e.studentId(), e.turmaId(),
                             e.date(), Instant.now()));
@@ -80,6 +88,11 @@ public class AttendanceService {
             }
         }
         return new BatchResult(accepted, skipped, failed);
+    }
+
+    private AttendanceRecord updateExisting(AttendanceRecord existing, AttendanceEntry e, UUID actor) {
+        existing.applyUpdate(e.status(), e.notes(), actor);
+        return existing;
     }
 
     @Transactional(readOnly = true)

@@ -77,4 +77,11 @@ public class AttendanceRecord {
     public String notes() { return notes; }
     public UUID recordedBy() { return recordedBy; }
     public Instant recordedAt() { return recordedAt; }
+
+    public void applyUpdate(AttendanceStatus status, String notes, UUID recordedBy) {
+        this.status = status;
+        this.notes = notes;
+        this.recordedBy = recordedBy;
+        this.recordedAt = Instant.now();
+    }
 }
