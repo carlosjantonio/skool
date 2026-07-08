@@ -9,5 +9,6 @@ import java.util.UUID;
 public interface EnrollmentRepository extends JpaRepository<Enrollment, UUID> {
     List<Enrollment> findByTenantIdAndAcademicYearId(UUID tenantId, UUID academicYearId);
     List<Enrollment> findByTurmaId(UUID turmaId);
+    List<Enrollment> findByStudentIdOrderByEnrolledAtDesc(UUID studentId);
     boolean existsByStudentIdAndAcademicYearId(UUID studentId, UUID academicYearId);
 }

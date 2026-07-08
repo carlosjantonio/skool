@@ -12,6 +12,7 @@ public record SkoolPrincipal(
         String userId,
         TenantId tenantId,
         String email,
+        String fullName,
         Set<String> roles
 ) {
     public boolean hasRole(String role) {

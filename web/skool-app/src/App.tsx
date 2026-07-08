@@ -8,6 +8,15 @@ import { UnauthorizedPage } from './pages/UnauthorizedPage';
 import { TeacherClassesPage } from './pages/TeacherClassesPage';
 import { TeacherAttendancePage } from './pages/TeacherAttendancePage';
 import { TeacherGradesPage } from './pages/TeacherGradesPage';
+import { TeacherQuizzesPage } from './pages/TeacherQuizzesPage';
+import { TeacherQuizBuilderPage } from './pages/TeacherQuizBuilderPage';
+import { TeacherQuizResultsPage } from './pages/TeacherQuizResultsPage';
+import { StudentDashboardPage } from './pages/StudentDashboardPage';
+import { StudentQuizPage } from './pages/StudentQuizPage';
+import { StudentGradesPage } from './pages/StudentGradesPage';
+import { StudentAssignmentsPage } from './pages/StudentAssignmentsPage';
+import { ForumPage } from './pages/ForumPage';
+import { ForumThreadPage } from './pages/ForumThreadPage';
 
 export default function App() {
   return (
@@ -44,6 +53,78 @@ export default function App() {
             element={
               <ProtectedRoute roles={['TEACHER', 'DIRECTOR', 'ADMIN']}>
                 <TeacherGradesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/classes/:turmaId/quizzes"
+            element={
+              <ProtectedRoute roles={['TEACHER', 'DIRECTOR', 'ADMIN']}>
+                <TeacherQuizzesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/classes/:turmaId/quizzes/new"
+            element={
+              <ProtectedRoute roles={['TEACHER', 'DIRECTOR', 'ADMIN']}>
+                <TeacherQuizBuilderPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/classes/:turmaId/quizzes/:quizId/results"
+            element={
+              <ProtectedRoute roles={['TEACHER', 'DIRECTOR', 'ADMIN']}>
+                <TeacherQuizResultsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/student"
+            element={
+              <ProtectedRoute roles={['STUDENT']}>
+                <StudentDashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/student/quizzes/:quizId"
+            element={
+              <ProtectedRoute roles={['STUDENT']}>
+                <StudentQuizPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/student/grades"
+            element={
+              <ProtectedRoute roles={['STUDENT']}>
+                <StudentGradesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/student/assignments"
+            element={
+              <ProtectedRoute roles={['STUDENT']}>
+                <StudentAssignmentsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/student/forums/:forumId"
+            element={
+              <ProtectedRoute roles={['STUDENT', 'TEACHER', 'DIRECTOR', 'ADMIN']}>
+                <ForumPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/student/forums/threads/:threadId"
+            element={
+              <ProtectedRoute roles={['STUDENT', 'TEACHER', 'DIRECTOR', 'ADMIN']}>
+                <ForumThreadPage />
               </ProtectedRoute>
             }
           />

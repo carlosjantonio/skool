@@ -173,50 +173,55 @@ Status of every phase in [INITIAL_PLAN.md](INITIAL_PLAN.md). Check the plan itse
 
 ---
 
-## Phase 4 — Student Learning Portal Core ⏳
+## Phase 4 — Student Learning Portal Core 🟡
 
 **Goal:** The differentiating feature set from Section 3 of the prompt.
 
 ### Assessment module
-- [ ] Question bank organized by subject + grade level, reusable across classes
-- [ ] Quiz creation with multiple question types (multiple choice, true/false, short answer, essay)
-- [ ] Timed test delivery with auto-submit
-- [ ] Randomized question + option order per-student
-- [ ] Auto-grade objective questions
-- [ ] Manual-grade essay workflow with rubric
-- [ ] Offline-tolerant test-taking (cache quiz locally, sync answers on reconnect)
-- [ ] Result analytics for teachers (per-question difficulty, class averages)
-- [ ] Per-student performance history
-- [ ] `QuizPublished` and `QuizSubmitted` events
-- [ ] Anti-cheating basics: tab-switch detection, time limits, randomization
+- [x] Question bank organized by subject + grade level, reusable across classes
+- [x] Quiz creation with multiple question types (multiple choice, true/false, short answer, essay)
+- [x] Timed test delivery with auto-submit
+- [x] Randomized question + option order per-student
+- [x] Auto-grade objective questions
+- [x] Manual-grade essay workflow with rubric
+- [x] Offline-tolerant test-taking (cache quiz locally, sync answers on reconnect)
+- [x] Result analytics for teachers (per-question difficulty, class averages) — `GET /api/quizzes/{id}/analytics`
+- [x] Per-student performance history (attempts list endpoint)
+- [x] `QuizPublished` and `QuizSubmitted` events
+- [x] Anti-cheating basics: tab-switch detection, time limits, randomization
 
 ### Assignments module
-- [ ] Create → submit → grade → feedback loop
-- [ ] Student file upload (uses Documents module)
-- [ ] Deadline reminders
-- [ ] Teacher grading UI with rubric
-- [ ] `AssignmentDue` event
+- [x] Create → submit → grade → feedback loop
+- [x] Student file upload (uses Documents module — submission stores document_id)
+- [ ] Deadline reminders (event fires; notification wiring lands in Phase 6)
+- [x] Teacher grading UI endpoints with rubric field
+- [x] `AssignmentDue` event
 
 ### Forum module
-- [ ] One forum per subject per class (e.g., "Matemática – 10ª A")
-- [ ] Threads with posts and replies
-- [ ] Upvoting / helpful-marking
-- [ ] Teacher moderation (pin, delete, hide, mark as verified answer)
-- [ ] Notification when a teacher or peer replies to your post
-- [ ] `ForumReplyPosted` event
+- [x] One forum per subject per class (unique on subject_id + turma_id + academic_year_id)
+- [x] Threads with posts and replies
+- [x] Upvoting / helpful-marking (toggle via `forum_upvotes` join table)
+- [x] Teacher moderation (pin, hide, mark as verified answer)
+- [ ] Notification when a teacher or peer replies to your post (event fires; notification module lands in Phase 6)
+- [x] `ForumReplyPosted` event
 
 ### Subject Board module
-- [ ] Announcements per subject
-- [ ] Class materials (PDFs, slides, links) via Documents module
-- [ ] Due-date-aware feed
-- [ ] Low-bandwidth mode for attachments
-- [ ] `AnnouncementPosted` event
+- [x] Announcements per subject
+- [x] Class materials (PDFs, slides, links) via document_id / external_url
+- [x] Due-date-aware feed (`due_at` column, indexed)
+- [x] Low-bandwidth flag on entries — client skips prefetch
+- [x] `AnnouncementPosted` event
 
 ### Student portal UI
-- [ ] Personal dashboard (upcoming tests, pending assignments, recent grades, forum activity)
-- [ ] Consolidated subject board feed + per-subject view
-- [ ] Quiz-taking interface (with offline shell)
-- [ ] Grade view with drill-down to per-subject history
+- [x] Personal dashboard (upcoming quizzes, class board feed, subject forums)
+- [x] Consolidated subject board feed
+- [x] Quiz-taking interface with offline shell (IndexedDB + deterministic v5 answer ids)
+- [x] Grade view with per-trimester / per-subject table
+
+### Cross-cutting
+- [x] SIS: student ↔ user link (migration V4_3) + `POST /api/students/{id}/portal-user`
+- [x] Identity: `createStudentUser(...)` on `IdentityUserService`
+- [x] `SkoolPrincipal.fullName` piped through JWT so forum authorship works without cross-module lookups
 
 **Exit criteria (per plan):** teacher creates a 20-question timed quiz, student takes it on a phone with the network cut mid-quiz and answers sync on reconnect; a subject forum has an active teacher-moderated thread.
 

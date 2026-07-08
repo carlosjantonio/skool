@@ -47,6 +47,9 @@ public class Student {
     @Column(name = "photo_document_id")
     private UUID photoDocumentId;
 
+    @Column(name = "user_id")
+    private UUID userId;
+
     @Column(nullable = false)
     private boolean active = true;
 
@@ -73,8 +76,10 @@ public class Student {
     public String addressLine1() { return addressLine1; }
     public String healthNotes() { return healthNotes; }
     public UUID photoDocumentId() { return photoDocumentId; }
+    public UUID userId() { return userId; }
     public boolean active() { return active; }
 
+    public void linkUser(UUID userId) { this.userId = userId; }
     public void setBi(String bi) { this.bi = bi; }
     public void setAddress(String comunaOuBairro, String addressLine1) {
         this.comunaOuBairro = comunaOuBairro;

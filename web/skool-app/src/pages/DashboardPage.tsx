@@ -1,3 +1,4 @@
+import { Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../auth/AuthContext';
 import type { Role } from '../api/types';
@@ -35,6 +36,12 @@ export function DashboardPage() {
   const { t } = useTranslation();
   const { session } = useAuth();
   if (!session) return null;
+
+  // Student-only accounts land straight on the student portal — the generic action
+  // list is a stub, the portal is the real thing.
+  if (session.roles.length === 1 && session.roles[0] === 'STUDENT') {
+    return <Navigate to="/student" replace />;
+  }
 
   const applicable = VIEWS.filter((v) => session.roles.includes(v.role));
 

@@ -81,12 +81,15 @@ export function TeacherClassesPage() {
                   </div>
                 ))}
               </div>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <Link to={`/classes/${turmaId}/attendance`} style={{ flex: 1 }}>
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <Link to={`/classes/${turmaId}/attendance`} style={{ flex: '1 1 45%' }}>
                   <button style={{ width: '100%' }}>{t('teacher.classes.attendance')}</button>
                 </Link>
-                <Link to={`/classes/${turmaId}/grades`} style={{ flex: 1 }}>
+                <Link to={`/classes/${turmaId}/grades`} style={{ flex: '1 1 45%' }}>
                   <button className="secondary" style={{ width: '100%' }}>{t('teacher.classes.grades')}</button>
+                </Link>
+                <Link to={`/classes/${turmaId}/quizzes`} style={{ flex: '1 1 100%' }}>
+                  <button className="secondary" style={{ width: '100%' }}>{t('teacher.classes.quizzes')}</button>
                 </Link>
               </div>
             </div>

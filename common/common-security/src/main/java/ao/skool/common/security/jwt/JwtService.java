@@ -43,6 +43,7 @@ public class JwtService {
                 .expiration(Date.from(expires))
                 .claim("tenant", principal.tenantId().value().toString())
                 .claim("email", principal.email())
+                .claim("name", principal.fullName())
                 .claim("roles", List.copyOf(principal.roles()))
                 .signWith(key)
                 .compact();
@@ -63,6 +64,7 @@ public class JwtService {
                 claims.getSubject(),
                 TenantId.of(claims.get("tenant", String.class)),
                 claims.get("email", String.class),
+                claims.get("name", String.class),
                 Set.copyOf(roles)
         );
     }

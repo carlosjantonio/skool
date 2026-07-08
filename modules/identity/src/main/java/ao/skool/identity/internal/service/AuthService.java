@@ -83,6 +83,7 @@ public class AuthService {
                 user.id().toString(),
                 TenantId.of(user.tenantId()),
                 user.email(),
+                user.fullName(),
                 user.roles());
         var access = jwtService.issueAccessToken(principal);
 

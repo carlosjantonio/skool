@@ -25,6 +25,9 @@ public interface IdentityUserService {
     /** Same for a teacher. */
     UUID createTeacherUser(TenantId tenantId, String email, String fullName);
 
+    /** Same for a student. */
+    UUID createStudentUser(TenantId tenantId, String email, String fullName);
+
     /** Generic escape hatch when the caller has explicit roles to assign. */
     UUID createUser(TenantId tenantId, String email, String fullName, Set<String> roles);
 

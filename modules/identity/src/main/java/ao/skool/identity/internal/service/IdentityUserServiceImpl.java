@@ -41,6 +41,11 @@ public class IdentityUserServiceImpl implements IdentityUserService {
     }
 
     @Override
+    public UUID createStudentUser(TenantId tenantId, String email, String fullName) {
+        return createUser(tenantId, email, fullName, Set.of(Roles.STUDENT));
+    }
+
+    @Override
     public UUID createUser(TenantId tenantId, String email, String fullName, Set<String> roles) {
         users.findByEmailIgnoreCase(email).ifPresent(u -> {
             throw new UserAlreadyExistsException(email);

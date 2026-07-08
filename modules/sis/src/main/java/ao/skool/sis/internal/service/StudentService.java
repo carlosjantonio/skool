@@ -1,7 +1,9 @@
 package ao.skool.sis.internal.service;
 
 import ao.skool.common.domain.tenant.TenantContext;
+import ao.skool.common.web.error.ApplicationException;
 import ao.skool.common.web.error.NotFoundException;
+import ao.skool.identity.api.IdentityUserService;
 import ao.skool.sis.internal.domain.Guardian;
 import ao.skool.sis.internal.domain.Student;
 import ao.skool.sis.internal.domain.StudentGuardianLink;
@@ -11,7 +13,9 @@ import ao.skool.sis.internal.persistence.StudentRepository;
 import ao.skool.sis.internal.web.dto.StudentDtos.CreateStudent;
 import ao.skool.sis.internal.web.dto.StudentDtos.GuardianSummary;
 import ao.skool.sis.internal.web.dto.StudentDtos.LinkGuardian;
+import ao.skool.sis.internal.web.dto.StudentDtos.ProvisionStudentUser;
 import ao.skool.sis.internal.web.dto.StudentDtos.StudentResponse;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,14 +30,32 @@ public class StudentService {
     private final StudentRepository students;
     private final GuardianRepository guardians;
     private final StudentGuardianRepository links;
+    private final IdentityUserService identity;
     private final TenantContext tenant;
 
     public StudentService(StudentRepository students, GuardianRepository guardians,
-                          StudentGuardianRepository links, TenantContext tenant) {
+                          StudentGuardianRepository links, IdentityUserService identity,
+                          TenantContext tenant) {
         this.students = students;
         this.guardians = guardians;
         this.links = links;
+        this.identity = identity;
         this.tenant = tenant;
+    }
+
+    public StudentResponse provisionPortalUser(UUID studentId, ProvisionStudentUser cmd) {
+        Student student = students.findById(studentId).orElseThrow(NotFoundException::new);
+        if (!student.tenantId().equals(tenant.current().value())) throw new NotFoundException();
+        if (student.userId() != null) {
+            throw new ApplicationException(HttpStatus.CONFLICT, "error.conflict");
+        }
+        try {
+            UUID userId = identity.createStudentUser(tenant.current(), cmd.email(), student.fullName());
+            student.linkUser(userId);
+        } catch (IdentityUserService.UserAlreadyExistsException e) {
+            throw new ApplicationException(HttpStatus.CONFLICT, "error.conflict");
+        }
+        return get(student.id());
     }
 
     public StudentResponse create(CreateStudent cmd) {

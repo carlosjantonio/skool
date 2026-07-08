@@ -30,6 +30,10 @@ public final class StudentDtos {
             boolean emergencyContact
     ) {}
 
+    public record ProvisionStudentUser(
+            @NotBlank String email
+    ) {}
+
     public record GuardianSummary(
             UUID id,
             String fullName,

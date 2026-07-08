@@ -4,6 +4,7 @@ import ao.skool.common.security.Roles;
 import ao.skool.sis.internal.service.StudentService;
 import ao.skool.sis.internal.web.dto.StudentDtos.CreateStudent;
 import ao.skool.sis.internal.web.dto.StudentDtos.LinkGuardian;
+import ao.skool.sis.internal.web.dto.StudentDtos.ProvisionStudentUser;
 import ao.skool.sis.internal.web.dto.StudentDtos.StudentResponse;
 import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -32,6 +33,12 @@ public class StudentController {
     @PreAuthorize("hasAnyRole('" + Roles.ADMIN + "','" + Roles.DIRECTOR + "','" + Roles.SECRETARY + "')")
     public StudentResponse linkGuardian(@PathVariable UUID id, @Valid @RequestBody LinkGuardian cmd) {
         return service.linkGuardian(id, cmd);
+    }
+
+    @PostMapping("/{id}/portal-user")
+    @PreAuthorize("hasAnyRole('" + Roles.ADMIN + "','" + Roles.DIRECTOR + "','" + Roles.SECRETARY + "')")
+    public StudentResponse provisionPortalUser(@PathVariable UUID id, @Valid @RequestBody ProvisionStudentUser cmd) {
+        return service.provisionPortalUser(id, cmd);
     }
 
     @GetMapping

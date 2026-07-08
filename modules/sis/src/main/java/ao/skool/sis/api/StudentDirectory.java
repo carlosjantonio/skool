@@ -13,5 +13,8 @@ public interface StudentDirectory {
 
     Optional<StudentSummary> findStudent(UUID studentId);
 
-    record StudentSummary(UUID id, UUID tenantId, String fullName, LocalDate dateOfBirth, String sex) {}
+    /** Finds the student profile linked to the given portal user (STUDENT role). */
+    Optional<StudentSummary> findStudentByUserId(UUID userId);
+
+    record StudentSummary(UUID id, UUID tenantId, String fullName, LocalDate dateOfBirth, String sex, UUID userId) {}
 }

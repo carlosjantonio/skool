@@ -1,6 +1,7 @@
 package ao.skool.sis.internal.service;
 
 import ao.skool.sis.api.StudentDirectory;
+import ao.skool.sis.internal.domain.Student;
 import ao.skool.sis.internal.persistence.StudentRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,8 +21,16 @@ public class StudentDirectoryImpl implements StudentDirectory {
 
     @Override
     public Optional<StudentSummary> findStudent(UUID studentId) {
-        return students.findById(studentId)
-                .map(s -> new StudentSummary(s.id(), s.tenantId(), s.fullName(),
-                        s.dateOfBirth(), s.sex().name()));
+        return students.findById(studentId).map(this::toSummary);
+    }
+
+    @Override
+    public Optional<StudentSummary> findStudentByUserId(UUID userId) {
+        return students.findByUserId(userId).map(this::toSummary);
+    }
+
+    private StudentSummary toSummary(Student s) {
+        return new StudentSummary(s.id(), s.tenantId(), s.fullName(),
+                s.dateOfBirth(), s.sex().name(), s.userId());
     }
 }
