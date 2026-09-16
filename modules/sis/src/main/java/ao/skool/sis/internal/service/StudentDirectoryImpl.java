@@ -37,14 +37,32 @@ public class StudentDirectoryImpl implements StudentDirectory {
         this.tenant = tenant;
     }
 
+    /**
+     * Tenant-filtered on purpose. Callers pass a student id that arrived in a URL
+     * ({@code /api/grades/students/{id}/summary}, the assignments grading view, the fees
+     * defaulter report), and without this check a teacher at one school who held another
+     * school's student id would read that student's name and marks. The ids are opaque
+     * UUIDs so this was never trivially reachable, but tenant isolation should not rest on
+     * an id being hard to guess — especially for minors' records under Lei 22/11.
+     * <p>
+     * Returning empty rather than throwing keeps the cross-module contract unchanged:
+     * callers already map empty to 404, which is also the right answer here — another
+     * school's student should be indistinguishable from one that does not exist.
+     */
     @Override
     public Optional<StudentSummary> findStudent(UUID studentId) {
-        return students.findById(studentId).map(this::toSummary);
+        UUID tenantId = tenant.current().value();
+        return students.findById(studentId)
+                .filter(s -> s.tenantId().equals(tenantId))
+                .map(this::toSummary);
     }
 
     @Override
     public Optional<StudentSummary> findStudentByUserId(UUID userId) {
-        return students.findByUserId(userId).map(this::toSummary);
+        UUID tenantId = tenant.current().value();
+        return students.findByUserId(userId)
+                .filter(s -> s.tenantId().equals(tenantId))
+                .map(this::toSummary);
     }
 
     @Override
