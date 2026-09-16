@@ -110,6 +110,8 @@ public class PaymentService {
 
     @Transactional(readOnly = true)
     public List<PaymentResponse> listPaymentsForInvoice(UUID invoiceId) {
+        Invoice invoice = invoices.findById(invoiceId).orElseThrow(NotFoundException::new);
+        if (!invoice.tenantId().equals(tenant.current().value())) throw new NotFoundException();
         return payments.findByInvoiceIdOrderByReceivedAtAsc(invoiceId).stream()
                 .map(this::toPayment).toList();
     }

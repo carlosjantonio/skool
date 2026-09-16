@@ -127,7 +127,7 @@ public class FeeService {
                     skipped++;
                     continue;
                 }
-                Scholarship applied = pickScholarship(s.studentId(), today, scholarshipByStudent);
+                Scholarship applied = pickScholarship(s.studentId(), today, fs.amount(), scholarshipByStudent);
                 BigDecimal discount = applied == null ? BigDecimal.ZERO : applied.discountFor(fs.amount());
                 String reference = generateReference(today);
                 Invoice invoice = new Invoice(UUID.randomUUID(), fs.tenantId(), s.studentId(),
@@ -150,17 +150,21 @@ public class FeeService {
     /**
      * Choose an active scholarship for a student on the billing date. If the student
      * has more than one active bolsa (edge case — a director stacks a full grant
-     * and a percentage), we pick the highest discount so nobody loses out.
+     * and a percentage), we pick whichever discounts <em>this</em> invoice the most.
+     * The comparison has to run on the schedule's real amount: a FIXED grant is
+     * capped at the gross, so measured against an arbitrary probe it can lose to a
+     * smaller PERCENTAGE and the student ends up worse off. The gross is constant
+     * within one billing run, so the per-student cache stays valid.
      */
-    private Scholarship pickScholarship(UUID studentId, LocalDate today, Map<UUID, Scholarship> cache) {
+    private Scholarship pickScholarship(UUID studentId, LocalDate today, BigDecimal gross,
+                                        Map<UUID, Scholarship> cache) {
         if (cache.containsKey(studentId)) return cache.get(studentId);
         List<Scholarship> candidates = scholarships.findByStudentIdAndActiveTrue(studentId);
         Scholarship best = null;
         BigDecimal bestDiscount = BigDecimal.ZERO;
-        BigDecimal probe = BigDecimal.valueOf(100_000L); // arbitrary — we compare ratios
         for (Scholarship c : candidates) {
             if (!c.isValidOn(today)) continue;
-            BigDecimal d = c.discountFor(probe);
+            BigDecimal d = c.discountFor(gross);
             if (d.compareTo(bestDiscount) > 0) {
                 best = c;
                 bestDiscount = d;
@@ -172,10 +176,12 @@ public class FeeService {
 
     @Transactional(readOnly = true)
     public List<InvoiceResponse> listInvoicesForStudent(UUID studentId) {
+        // findStudent is tenant-scoped, so a student id from another school resolves
+        // to empty and that school's invoices are never listed — the invoice query
+        // itself has no tenant column to filter on.
+        var student = studentDirectory.findStudent(studentId).orElseThrow(NotFoundException::new);
         List<Invoice> rows = invoices.findByStudentIdOrderByIssuedAtDesc(studentId);
-        String name = studentDirectory.findStudent(studentId)
-                .map(StudentDirectory.StudentSummary::fullName).orElse("?");
-        return rows.stream().map(i -> toInvoice(i, name)).toList();
+        return rows.stream().map(i -> toInvoice(i, student.fullName())).toList();
     }
 
     @Transactional(readOnly = true)
