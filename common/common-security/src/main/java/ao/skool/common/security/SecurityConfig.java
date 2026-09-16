@@ -35,7 +35,12 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/actuator/health/**", "/actuator/info").permitAll()
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-                .requestMatchers("/api/auth/login", "/api/auth/refresh").permitAll()
+                // Logout is permitAll for the same reason refresh is: it authenticates by
+                // possession of the opaque refresh token in the body, not by access token.
+                // Requiring a live access token here meant a client whose token had expired
+                // could never revoke its refresh token — it would stay valid for the full
+                // 30-day TTL after the user thought they had logged out.
+                .requestMatchers("/api/auth/login", "/api/auth/refresh", "/api/auth/logout").permitAll()
                 .anyRequest().authenticated()
             );
         return http.build();
