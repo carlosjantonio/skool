@@ -17,6 +17,9 @@ import { StudentGradesPage } from './pages/StudentGradesPage';
 import { StudentAssignmentsPage } from './pages/StudentAssignmentsPage';
 import { ForumPage } from './pages/ForumPage';
 import { ForumThreadPage } from './pages/ForumThreadPage';
+import { AdminFeesPage } from './pages/AdminFeesPage';
+import { AdminDefaultersPage } from './pages/AdminDefaultersPage';
+import { GuardianInvoicesPage } from './pages/GuardianInvoicesPage';
 
 export default function App() {
   return (
@@ -125,6 +128,30 @@ export default function App() {
             element={
               <ProtectedRoute roles={['STUDENT', 'TEACHER', 'DIRECTOR', 'ADMIN']}>
                 <ForumThreadPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/fees"
+            element={
+              <ProtectedRoute roles={['ADMIN', 'DIRECTOR', 'SECRETARY']}>
+                <AdminFeesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/defaulters"
+            element={
+              <ProtectedRoute roles={['ADMIN', 'DIRECTOR', 'SECRETARY']}>
+                <AdminDefaultersPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/guardian/invoices"
+            element={
+              <ProtectedRoute roles={['GUARDIAN']}>
+                <GuardianInvoicesPage />
               </ProtectedRoute>
             }
           />

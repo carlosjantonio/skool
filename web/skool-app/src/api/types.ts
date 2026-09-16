@@ -363,6 +363,90 @@ export interface ForumPost {
   createdAt: string;
 }
 
+// ---- Phase 5: Fees & Payments ----
+
+export type FeeKind = 'PROPINA_MENSAL' | 'MATRICULA' | 'EXAME' | 'UNIFORME' | 'MATERIAL' | 'OUTRO';
+export type InvoiceStatus = 'ISSUED' | 'PARTIAL' | 'PAID' | 'OVERDUE' | 'CANCELLED';
+export type ScholarshipKind = 'FULL' | 'PERCENTAGE' | 'FIXED';
+export type PaymentMethod = 'STUB_MANUAL' | 'MULTICAIXA_EXPRESS' | 'UNITEL_MONEY' | 'AFRICELL_MONEY' | 'BANK_TRANSFER';
+
+export interface FeeSchedule {
+  id: string;
+  academicYearId: string;
+  name: string;
+  kind: FeeKind;
+  amount: string;
+  currency: string;
+  gradeLevel: string | null;
+  trimesterKey: string | null;
+  periodMonth: number | null;
+  dueAt: string;
+  active: boolean;
+  createdAt: string;
+}
+
+export interface Invoice {
+  id: string;
+  studentId: string;
+  feeScheduleId: string;
+  reference: string;
+  title: string;
+  amountGross: string;
+  amountDiscount: string;
+  amountNet: string;
+  amountPaid: string;
+  outstanding: string;
+  currency: string;
+  issuedAt: string;
+  dueAt: string;
+  status: InvoiceStatus;
+  studentName: string | null;
+}
+
+export interface Scholarship {
+  id: string;
+  studentId: string;
+  kind: ScholarshipKind;
+  percentage: string | null;
+  fixedAmount: string | null;
+  validFrom: string;
+  validTo: string | null;
+  reason: string | null;
+  active: boolean;
+}
+
+export interface BillingResult {
+  issuedCount: number;
+  skippedCount: number;
+  failedCount: number;
+  issued: Invoice[];
+}
+
+export interface Payment {
+  id: string;
+  invoiceId: string;
+  amount: string;
+  currency: string;
+  method: PaymentMethod;
+  externalReference: string | null;
+  receivedAt: string;
+  notes: string | null;
+}
+
+export interface PaymentInitiation {
+  vendorReference: string;
+  instructions: string;
+  method: PaymentMethod;
+}
+
+export interface DefaulterRow {
+  studentId: string;
+  studentName: string;
+  overdueInvoiceCount: number;
+  totalOutstanding: string;
+  oldestDueAt: string;
+}
+
 export type BoardEntryKind = 'ANNOUNCEMENT' | 'MATERIAL' | 'LINK';
 
 export interface BoardEntry {

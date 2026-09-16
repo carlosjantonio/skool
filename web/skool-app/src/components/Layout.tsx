@@ -14,6 +14,8 @@ export function Layout() {
   }
 
   const teacherLike = hasRole('TEACHER') || hasRole('DIRECTOR') || hasRole('ADMIN');
+  const adminLike = hasRole('ADMIN') || hasRole('DIRECTOR') || hasRole('SECRETARY');
+  const isGuardian = hasRole('GUARDIAN');
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -28,6 +30,21 @@ export function Layout() {
           {teacherLike && (
             <NavLink to="/classes" style={({ isActive }) => ({ color: '#fff', textDecoration: 'none', opacity: isActive ? 1 : 0.75 })}>
               {t('nav.classes')}
+            </NavLink>
+          )}
+          {adminLike && (
+            <>
+              <NavLink to="/admin/fees" style={({ isActive }) => ({ color: '#fff', textDecoration: 'none', opacity: isActive ? 1 : 0.75 })}>
+                {t('nav.fees')}
+              </NavLink>
+              <NavLink to="/admin/defaulters" style={({ isActive }) => ({ color: '#fff', textDecoration: 'none', opacity: isActive ? 1 : 0.75 })}>
+                {t('nav.defaulters')}
+              </NavLink>
+            </>
+          )}
+          {isGuardian && (
+            <NavLink to="/guardian/invoices" style={({ isActive }) => ({ color: '#fff', textDecoration: 'none', opacity: isActive ? 1 : 0.75 })}>
+              {t('nav.invoices')}
             </NavLink>
           )}
         </nav>
