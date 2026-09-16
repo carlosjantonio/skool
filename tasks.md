@@ -231,7 +231,7 @@ module layout. This file is the punch list.
 
 ---
 
-## Phase 5 — Fees & Payments 🟡 (built, not landed)
+## Phase 5 — Fees & Payments 🟡 (landed, UI verified — tests and overdue scheduler outstanding)
 
 **Goal:** Financial operations for the school.
 
@@ -255,9 +255,9 @@ module layout. This file is the punch list.
 
 ### UI
 - [x] `AdminFeesPage`, `AdminDefaultersPage`, `GuardianInvoicesPage`
-- [ ] Not yet verified in the browser
+- [x] Verified in the browser against the HEAD image: schedules list, run-billing idempotent from the UI (0 emitidas / 6 ignoradas), defaulters total reconciles (5 × 75 000 + 50 000 = 425 000 Kz), guardian sees only her child's invoices and `Pagar` yields a Multicaixa reference without settling. Demo guardian: `maria.silva@skool.demo` (MAE of Aluno 1 Silva); temp password is in the app container log from 16 Sep.
 
-**Exit criteria (per plan):** admin generates monthly propinas for all enrolled students; a payment marked as received via stub adapter updates the invoice and fires `PaymentReceived`. — **Met in an API smoke test** (`Issued=6`, `Overdue swept: 6`, `Status=PAID`); not yet committed.
+**Exit criteria (per plan):** admin generates monthly propinas for all enrolled students; a payment marked as received via stub adapter updates the invoice and fires `PaymentReceived`. — **Met** (API smoke test `Issued=6`, `Status=PAID`; UI walk on 16 Sep). Commit `372610c`.
 
 ---
 ## Phase 6 — Notifications + Reporting ⏳ (superseded — split into ROADMAP Phases 7 and 11)

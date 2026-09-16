@@ -133,6 +133,7 @@ absent from the test schema both got through because nothing required them to be
 
 - Commit in logical slices: Phase 4 race fix → fees module + UI → docker-compose → test suite + the three fixes.
 - Walk `/admin/fees`, `/admin/defaulters`, `/guardian/invoices` in the browser; fix what's broken.
+- A missing or malformed query parameter returns 500 (`GET /api/fees/invoices` without `studentId`): map `MissingServletRequestParameterException` and `MethodArgumentTypeMismatchException` to 400 in `GlobalExceptionHandler`, with a test.
 - Fees backend tests: billing fan-out idempotency, scholarship precedence, overpayment refusal, overdue sweep, defaulter aggregation, each adapter's `initiate`.
 - **Tenant-isolation sweep.** Every repository query that takes an id from a URL and has no `tenantId` column is a candidate. Confirmed or likely exposed today: `GET /api/attendance?turmaId=` (`findByTurmaIdAndDateRecorded`), attendance summary counts, `GET /api/student/quizzes/available` (`findByTurmaIdAndStatus`), `EnrollmentRepository.findByTurmaId`, `StaffAssignmentRepository.findByTurmaId`, `GradeRepository.findByTurmaIdAndSubjectIdAndTrimesterKey`, fees `findByStudentId…`. Fix at the service layer (assert ownership) or add the column to the query; add a `CrossTenant…Test` per module so the pattern cannot recur unnoticed.
 - Audit coverage: wire `AuditLogWriter` into enrolment, withdrawal, portal-user provisioning, forum moderation, quiz publish, invoice/payment edits.
