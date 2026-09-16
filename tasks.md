@@ -231,7 +231,7 @@ module layout. This file is the punch list.
 
 ---
 
-## Phase 5 — Fees & Payments 🟡 (landed, UI verified — tests and overdue scheduler outstanding)
+## Phase 5 — Fees & Payments 🟡 (landed, UI verified, tested — overdue scheduler and bank CSV outstanding)
 
 **Goal:** Financial operations for the school.
 
@@ -245,7 +245,7 @@ module layout. This file is the punch list.
 - [x] Guardian invoice portal — `GET /api/guardian/fees/invoices`
 - [ ] Overdue detection is a manual `POST /api/payments/sweep-overdue` — needs a scheduled job (ROADMAP Phase 9)
 - [ ] Invoice / receipt PDFs (Phase 9)
-- [ ] Backend tests (Phase 5 in ROADMAP)
+- [x] Backend tests — 28 in `phase5/FeesTest`: billing fan-out and idempotency, grade-level filter, withdrawn students excluded, every bolsa kind incl. stacking, partial/full/over-payment, every adapter's `initiate`, overdue sweep, defaulter aggregation, guardian scoping, tenant and role gates
 
 ### Payment adapters
 - [x] `PaymentAdapter` interface + `PaymentAdapterRegistry` (`EnumMap` by `PaymentMethod`)
@@ -308,9 +308,9 @@ module layout. This file is the punch list.
 
 ---
 
-## Test coverage — Phases 0–4 ✅
+## Test coverage — Phases 0–5 ✅
 
-164 tests in `app/src/test/java/ao/skool/app`, run with
+192 tests in `app/src/test/java/ao/skool/app`, run with
 `docker run --rm -v "$PWD":/work -v "$HOME/.m2":/root/.m2 -w /work maven:3.9-eclipse-temurin-25 mvn -pl app -am test`
 (the host JDK is 23; the project needs 25).
 
@@ -327,12 +327,13 @@ writes and constraint handling behave as they do in production.
 | 2 | `phase2/` | 21 | Student + guardian records, guardian portal scoping, matrícula lifecycle, double-enrolment rejection, withdrawal removing a student from the billable roll, staff + assignments |
 | 3 | `phase3/` | 24 | Attendance upsert-by-client-id, duplicate `(student,turma,date)` handling, absence event fired **only on transition**, weighted averages worked out by hand, audit rows, boletim PDF, **cross-tenant student access** |
 | 4 | `phase4/` | 56 | Question bank (4 types), quiz lifecycle, **answer-key masking**, frozen per-student question order, idempotent answer writes, auto-grading, manual essay grading, analytics, assignments, forum moderation, subject board |
+| 5 | `phase5/` | 28 | Billing fan-out + idempotency, grade-level filter, withdrawn students, every bolsa kind incl. **stacking on the real amount**, partial/full/over-payment, every payment adapter, overdue sweep, defaulters, guardian scoping, **cross-tenant invoice/payment reads** |
 
 - [x] `SchemaIntegrityTest` — asserts every mapped entity has a queryable table. Hibernate logs a failed `CREATE TABLE` as a WARN and carries on, so this is the only thing stopping a table going silently missing from the test schema.
 - [ ] Frontend tests — `web/skool-app` still has none.
-- [ ] Phase 5 (fees) tests — not written yet (ROADMAP Phase 5).
+- [x] Phase 5 (fees) tests — 28, see the Phase 5 section.
 
-**Three defects found and fixed while writing these:**
+**Five defects found and fixed while writing these:**
 
 1. **Logout never revoked the refresh token.** `/api/auth/logout` required authentication, but
    the PWA calls it with `auth: false` and swallows the failure in a `finally`. A "logged out"
@@ -355,6 +356,16 @@ writes and constraint handling behave as they do in production.
    all for minors' records under Lei 22/11. Both methods now filter on the current tenant and
    return empty (→ 404), so another school's student is indistinguishable from one that does
    not exist. Pinned by `phase3/CrossTenantGradeAccessTest`.
+4. **Stacked bolsas could short-change the student.** `pickScholarship` compared candidate
+   discounts on a fixed 100 000 Kz probe instead of the schedule's real amount. A FIXED grant
+   is capped at the gross, so on a 25 000 Kz propina a 30 000 Kz fixed bolsa (worth 25 000)
+   lost to a 40% bolsa (worth 10 000) — the opposite of the documented intent. Now compared
+   on `fs.amount()`. Pinned by `bestScholarshipWinsOnTheActualAmount`.
+5. **Invoice and payment listings leaked across tenants.** `GET /api/fees/invoices?studentId=`
+   and `GET /api/payments?invoiceId=` queried by id with no tenant filter, so another school
+   holding an id got the rows (amounts, references, balances). Both now resolve the owning
+   student / invoice through the tenant-scoped lookups first and answer 404 otherwise. Pinned
+   by `invoiceReadsAreTenantScoped`.
 
 ---
 
