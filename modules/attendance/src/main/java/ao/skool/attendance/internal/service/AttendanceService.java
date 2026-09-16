@@ -33,12 +33,14 @@ import java.util.UUID;
 public class AttendanceService {
 
     private final AttendanceRepository attendance;
+    private final AttendanceRecordWriter recordWriter;
     private final TenantContext tenant;
     private final ApplicationEventPublisher events;
 
-    public AttendanceService(AttendanceRepository attendance, TenantContext tenant,
-                              ApplicationEventPublisher events) {
+    public AttendanceService(AttendanceRepository attendance, AttendanceRecordWriter recordWriter,
+                              TenantContext tenant, ApplicationEventPublisher events) {
         this.attendance = attendance;
+        this.recordWriter = recordWriter;
         this.tenant = tenant;
         this.events = events;
     }
@@ -71,12 +73,19 @@ public class AttendanceService {
         for (AttendanceEntry e : request.records()) {
             AttendanceRecord existing = existingById.get(e.id());
             boolean wasAbsentBefore = existing != null && existing.status() == AttendanceStatus.ABSENT;
-            AttendanceRecord record = existing != null
-                    ? updateExisting(existing, e, actor)
-                    : new AttendanceRecord(e.id(), tenantId.value(), e.turmaId(), e.studentId(),
-                            e.date(), e.status(), e.notes(), actor);
             try {
-                attendance.save(record);
+                if (existing != null) {
+                    // Update by primary key. student/turma/date are immutable on the entity,
+                    // so an update can never trip the uniqueness constraint — it is safe to
+                    // run in the caller's transaction.
+                    attendance.save(updateExisting(existing, e, actor));
+                } else {
+                    // Inserts go through their own transaction: a duplicate
+                    // (student, turma, date) must fail this entry alone, not poison the
+                    // persistence context and take the rest of the batch down with it.
+                    recordWriter.insertFresh(new AttendanceRecord(e.id(), tenantId.value(),
+                            e.turmaId(), e.studentId(), e.date(), e.status(), e.notes(), actor));
+                }
                 accepted.add(e.id());
                 if (e.status() == AttendanceStatus.ABSENT && !wasAbsentBefore) {
                     events.publishEvent(new AttendanceMarkedAbsent(
