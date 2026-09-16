@@ -32,8 +32,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -59,19 +61,22 @@ public class AttemptService {
     private final QuestionRepository questions;
     private final QuizAttemptRepository attempts;
     private final QuizAnswerRepository answers;
+    private final AttemptFactory attemptFactory;
     private final TenantContext tenant;
     private final ApplicationEventPublisher events;
     private final ObjectMapper mapper;
 
     public AttemptService(QuizRepository quizzes, QuizQuestionRepository quizQuestions,
                           QuestionRepository questions, QuizAttemptRepository attempts,
-                          QuizAnswerRepository answers, TenantContext tenant,
-                          ApplicationEventPublisher events, ObjectMapper mapper) {
+                          QuizAnswerRepository answers, AttemptFactory attemptFactory,
+                          TenantContext tenant, ApplicationEventPublisher events,
+                          ObjectMapper mapper) {
         this.quizzes = quizzes;
         this.quizQuestions = quizQuestions;
         this.questions = questions;
         this.attempts = attempts;
         this.answers = answers;
+        this.attemptFactory = attemptFactory;
         this.tenant = tenant;
         this.events = events;
         this.mapper = mapper;
@@ -107,9 +112,19 @@ public class AttemptService {
             }
             orderedIds = ids;
             String orderJson = writeJson(mapper.valueToTree(ids));
-            attempt = new QuizAttempt(UUID.randomUUID(), tenant.current().value(),
+            QuizAttempt fresh = new QuizAttempt(UUID.randomUUID(), tenant.current().value(),
                     quizId, studentId, orderJson);
-            attempts.save(attempt);
+            try {
+                attempt = attemptFactory.insertFresh(fresh);
+            } catch (DataIntegrityViolationException race) {
+                // A concurrent request (e.g. React StrictMode dev double-fire, or two
+                // browser tabs) won the race on uk_attempts_quiz_student. Their row is
+                // committed; re-fetch it and honour their question ordering — otherwise
+                // the two views would disagree on which question is #1.
+                attempt = attempts.findByQuizIdAndStudentId(quizId, studentId)
+                        .orElseThrow(() -> race);
+                orderedIds = readOrder(attempt.questionOrder());
+            }
         } else {
             orderedIds = readOrder(attempt.questionOrder());
         }

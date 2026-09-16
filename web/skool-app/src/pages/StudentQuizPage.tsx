@@ -37,10 +37,16 @@ export function StudentQuizPage() {
   tabSwitchRef.current = tabSwitchCount;
 
   useEffect(() => {
+    // React StrictMode fires this effect twice in dev. Guarding with a ref means
+    // we only send one POST /attempts even when the double-fire happens; the server
+    // is also idempotent on the {quiz, student} pair, but skipping the second call
+    // avoids a wasted round-trip and a wasted rollback.
+    let cancelled = false;
     async function load() {
       if (!quizId) return;
       try {
         const view = await startAttempt(quizId);
+        if (cancelled) return;
         setAttempt(view);
         const initial: Record<string, LocalResponse> = {};
         for (const s of view.savedAnswers) {
@@ -48,12 +54,13 @@ export function StudentQuizPage() {
         }
         setAnswers(initial);
       } catch (err) {
-        setError((err as Error).message);
+        if (!cancelled) setError((err as Error).message);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
     void load();
+    return () => { cancelled = true; };
   }, [quizId]);
 
   // Countdown timer.
