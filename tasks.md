@@ -1,6 +1,8 @@
 # Skool — Task Tracker
 
-Status of every phase in [INITIAL_PLAN.md](INITIAL_PLAN.md). Check the plan itself for the full rationale behind each phase; this file is the punch list.
+Status of every phase. The forward plan — revised scope, re-ordered phases, next actions — is
+[ROADMAP.md](ROADMAP.md); [INITIAL_PLAN.md](INITIAL_PLAN.md) keeps the guiding decisions and
+module layout. This file is the punch list.
 
 **Legend:** ✅ done · ⏳ pending · 🟡 partially done
 
@@ -173,7 +175,7 @@ Status of every phase in [INITIAL_PLAN.md](INITIAL_PLAN.md). Check the plan itse
 
 ---
 
-## Phase 4 — Student Learning Portal Core 🟡
+## Phase 4 — Student Learning Portal Core ✅
 
 **Goal:** The differentiating feature set from Section 3 of the prompt.
 
@@ -193,7 +195,7 @@ Status of every phase in [INITIAL_PLAN.md](INITIAL_PLAN.md). Check the plan itse
 ### Assignments module
 - [x] Create → submit → grade → feedback loop
 - [x] Student file upload (uses Documents module — submission stores document_id)
-- [ ] Deadline reminders (event fires; notification wiring lands in Phase 6)
+- [x] Deadline reminders — `AssignmentDue` fires; delivery is Phase 7 (notifications) in ROADMAP.md
 - [x] Teacher grading UI endpoints with rubric field
 - [x] `AssignmentDue` event
 
@@ -202,7 +204,7 @@ Status of every phase in [INITIAL_PLAN.md](INITIAL_PLAN.md). Check the plan itse
 - [x] Threads with posts and replies
 - [x] Upvoting / helpful-marking (toggle via `forum_upvotes` join table)
 - [x] Teacher moderation (pin, hide, mark as verified answer)
-- [ ] Notification when a teacher or peer replies to your post (event fires; notification module lands in Phase 6)
+- [x] Reply notification — `ForumReplyPosted` fires; delivery is Phase 7 (notifications) in ROADMAP.md
 - [x] `ForumReplyPosted` event
 
 ### Subject Board module
@@ -225,32 +227,40 @@ Status of every phase in [INITIAL_PLAN.md](INITIAL_PLAN.md). Check the plan itse
 
 **Exit criteria (per plan):** teacher creates a 20-question timed quiz, student takes it on a phone with the network cut mid-quiz and answers sync on reconnect; a subject forum has an active teacher-moderated thread.
 
+**Commit:** `d72f03f` (race fix on `uk_attempts_quiz_student` still uncommitted — lands in Phase 5)
+
 ---
 
-## Phase 5 — Fees & Payments ⏳
+## Phase 5 — Fees & Payments 🟡 (built, not landed)
 
 **Goal:** Financial operations for the school.
 
 ### Fees module
-- [ ] Fee schedules (propinas mensais, matrícula, exames)
-- [ ] Scholarships / bolsas
-- [ ] Kwanza invoicing
-- [ ] Defaulter reports
-- [ ] `InvoiceIssued`, `PaymentReceived`, `InvoiceOverdue` events
+- [x] Fee schedules (`FeeKind`: PROPINA_MENSAL, MATRICULA, EXAME, UNIFORME, MATERIAL, OUTRO)
+- [x] Scholarships / bolsas (FULL / PERCENTAGE / FIXED; best active one applied at billing)
+- [x] Kwanza invoicing — `POST /api/fees/schedules/{id}/run-billing` fans out idempotently on `(fee_schedule_id, student_id)` over `StudentDirectory.listEnrolledForYear`
+- [x] Defaulter report — `GET /api/payments/defaulters`, aggregated per student
+- [x] `InvoiceIssued`, `PaymentReceived`, `InvoiceOverdue` events
+- [x] Audit rows on `invoice.issue` and `payment.record`
+- [x] Guardian invoice portal — `GET /api/guardian/fees/invoices`
+- [ ] Overdue detection is a manual `POST /api/payments/sweep-overdue` — needs a scheduled job (ROADMAP Phase 9)
+- [ ] Invoice / receipt PDFs (Phase 9)
+- [ ] Backend tests (Phase 5 in ROADMAP)
 
 ### Payment adapters
-- [ ] `PaymentAdapter` interface
-- [ ] `StubPaymentAdapter` — admin marks invoice paid manually
-- [ ] Multicaixa Express reference-payment adapter (skeleton — real integration gated on procurement)
-- [ ] Unitel Money adapter (skeleton)
-- [ ] Africell Money adapter (skeleton)
-- [ ] Bank transfer reconciliation (BAI / BFA / BIC / Standard Bank Angola CSV import)
+- [x] `PaymentAdapter` interface + `PaymentAdapterRegistry` (`EnumMap` by `PaymentMethod`)
+- [x] `StubPaymentAdapter` — settles immediately; admin "mark paid"
+- [x] Multicaixa Express / Unitel Money / Africell Money — skeletons returning references; real integration gated on procurement
+- [ ] Bank transfer — returns a hard-coded IBAN string; no CSV reconciliation yet (Phase 9)
 
-**Exit criteria (per plan):** admin generates monthly propinas for all enrolled students; a payment marked as received via stub adapter updates the invoice and fires `PaymentReceived`.
+### UI
+- [x] `AdminFeesPage`, `AdminDefaultersPage`, `GuardianInvoicesPage`
+- [ ] Not yet verified in the browser
+
+**Exit criteria (per plan):** admin generates monthly propinas for all enrolled students; a payment marked as received via stub adapter updates the invoice and fires `PaymentReceived`. — **Met in an API smoke test** (`Issued=6`, `Overdue swept: 6`, `Status=PAID`); not yet committed.
 
 ---
-
-## Phase 6 — Notifications + Reporting ⏳
+## Phase 6 — Notifications + Reporting ⏳ (superseded — split into ROADMAP Phases 7 and 11)
 
 **Goal:** The system talks to guardians and to the Ministry.
 
@@ -274,7 +284,7 @@ Status of every phase in [INITIAL_PLAN.md](INITIAL_PLAN.md). Check the plan itse
 
 ---
 
-## Phase 7 — Hardening + Rollout ⏳
+## Phase 7 — Hardening + Rollout ⏳ (superseded — ROADMAP Phase 12; consent/CSV import pulled forward to Phase 10)
 
 **Goal:** Pilot with one real school.
 
@@ -295,6 +305,56 @@ Status of every phase in [INITIAL_PLAN.md](INITIAL_PLAN.md). Check the plan itse
 - [ ] Accessibility pass (WCAG 2.1 AA where feasible)
 - [ ] Observability: OTLP exporter to a real tracing backend
 - [ ] Pilot: one school runs a full trimester on the system
+
+---
+
+## Test coverage — Phases 0–4 ✅
+
+164 tests in `app/src/test/java/ao/skool/app`, run with
+`docker run --rm -v "$PWD":/work -v "$HOME/.m2":/root/.m2 -w /work maven:3.9-eclipse-temurin-25 mvn -pl app -am test`
+(the host JDK is 23; the project needs 25).
+
+Everything is driven through MockMvc with real signed JWTs rather than by calling services
+directly — the seams most likely to break are the JWT filter, `@PreAuthorize` gates, tenant
+resolution and the JSON contracts, and a service-level test skips all of them. Tests are not
+`@Transactional`; each test method gets a **fresh tenant UUID** instead, so `REQUIRES_NEW`
+writes and constraint handling behave as they do in production.
+
+| Phase | Files | Tests | What is pinned down |
+|---|---|---|---|
+| 0 | `phase0/` | 35 | BI/NIF/Money/TenantId invariants, public vs. authenticated routes, forged-token rejection, RFC 7807 shape in pt-AO, tenant isolation, **schema integrity guard** |
+| 1 | `phase1/` | 25 | JWT claim round-trip + forgery/expiry/issuer rejection, login, refresh **rotation**, logout revocation, hashed-at-rest refresh tokens, academic year/trimester/subject/turma, role gates |
+| 2 | `phase2/` | 21 | Student + guardian records, guardian portal scoping, matrícula lifecycle, double-enrolment rejection, withdrawal removing a student from the billable roll, staff + assignments |
+| 3 | `phase3/` | 24 | Attendance upsert-by-client-id, duplicate `(student,turma,date)` handling, absence event fired **only on transition**, weighted averages worked out by hand, audit rows, boletim PDF, **cross-tenant student access** |
+| 4 | `phase4/` | 56 | Question bank (4 types), quiz lifecycle, **answer-key masking**, frozen per-student question order, idempotent answer writes, auto-grading, manual essay grading, analytics, assignments, forum moderation, subject board |
+
+- [x] `SchemaIntegrityTest` — asserts every mapped entity has a queryable table. Hibernate logs a failed `CREATE TABLE` as a WARN and carries on, so this is the only thing stopping a table going silently missing from the test schema.
+- [ ] Frontend tests — `web/skool-app` still has none.
+- [ ] Phase 5 (fees) tests — not written yet (ROADMAP Phase 5).
+
+**Three defects found and fixed while writing these:**
+
+1. **Logout never revoked the refresh token.** `/api/auth/logout` required authentication, but
+   the PWA calls it with `auth: false` and swallows the failure in a `finally`. A "logged out"
+   session's refresh token stayed valid for its full 30-day TTL. Fixed by adding logout to the
+   `permitAll` list next to refresh — both authenticate by possession of the opaque token, not
+   by access token.
+2. **One bad attendance row killed the whole batch.** `AttendanceService.ingest` caught
+   `DataIntegrityViolationException` around `save()`, but JPA does not flush there, so the
+   violation surfaced at commit — outside the `catch` — and returned 500 instead of the
+   documented per-entry `failed` list. The offline queue would have retried that batch forever.
+   Fixed with `AttendanceRecordWriter` (`REQUIRES_NEW` + `saveAndFlush`), mirroring the
+   `AttemptFactory` pattern already used in assessment.
+3. **`StudentDirectory` leaked across tenants.** `findStudent` / `findStudentByUserId` were
+   plain `findById` lookups with no tenant filter, and `GradeRepository` does not filter by
+   tenant either — so a teacher at school B holding a school A `studentId` + `academicYearId`
+   got a 200 with that student's name and marks from
+   `GET /api/grades/students/{id}/summary`. The same lookup backs the assignments grading
+   view and the fees defaulter report. Both ids are opaque UUIDs so it was not trivially
+   reachable, but tenant isolation should not rest on an id being hard to guess — least of
+   all for minors' records under Lei 22/11. Both methods now filter on the current tenant and
+   return empty (→ 404), so another school's student is indistinguishable from one that does
+   not exist. Pinned by `phase3/CrossTenantGradeAccessTest`.
 
 ---
 
@@ -324,4 +384,4 @@ Still worth answering before Phase 7 (or Phase 5, whichever comes first):
 ---
 
 **Commits so far:**
-`848f44e` (Phase 0) · `17e4931` (Phase 1 backend) · `4b34da8` (PWA skeleton) · `e5d8637` (Phase 2) · `43ee5d2` (Phase 3) · `edd484b` (Phase 3b) — all on `origin/main`.
+`848f44e` (Phase 0) · `17e4931` (Phase 1 backend) · `4b34da8` (PWA skeleton) · `e5d8637` (Phase 2) · `43ee5d2` (Phase 3) · `edd484b` (Phase 3b) · `d72f03f` (Phase 4) — all on `origin/main`. Phase 5, the test suite and three fixes are **uncommitted**.

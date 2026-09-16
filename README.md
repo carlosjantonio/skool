@@ -5,7 +5,9 @@ Sistema de Gestão Escolar para o contexto angolano — matrícula, pautas, prop
 ## Docs
 
 - [Original prompt](school-management-system-prompt.md) — the full spec
-- [Initial plan](INITIAL_PLAN.md) — phases, decisions, MVP scope
+- [Roadmap](ROADMAP.md) — revised plan: feature inventory vs the prompt, next phases, blocking decisions
+- [Initial plan](INITIAL_PLAN.md) — original phases, guiding decisions, module layout
+- [Task tracker](tasks.md) — punch list per phase
 - [ADRs](docs/adr/) — architecture decisions
 - [Domain events](docs/events.md) — cross-module event catalog
 
@@ -18,6 +20,10 @@ Java 25 · Spring Boot 3.5 · PostgreSQL 16 · Flyway · Spring Security · Mave
 ```sh
 docker compose up -d postgres minio     # infra only
 mvn -pl app spring-boot:run              # run the app on host
+
+# Port 5432 already taken on your machine? Remap the host side and point the app at it:
+SKOOL_PG_HOST_PORT=5433 docker compose up -d postgres minio
+SKOOL_DB_URL=jdbc:postgresql://localhost:5433/skool mvn -pl app spring-boot:run
 
 # or run everything in containers:
 docker compose --profile full up --build
