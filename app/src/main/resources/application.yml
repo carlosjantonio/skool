@@ -18,6 +18,12 @@ spring:
           time_zone: Africa/Luanda
   flyway:
     enabled: true
+    # Each module owns a version-prefix range (identity=V3, sis=V4, staff=V5, …).
+    # A new migration inside an existing range sorts before higher-prefix ones that
+    # are already applied, so we allow out-of-order to keep per-module authoring
+    # independent. Modules still own disjoint ranges — this only affects intra-module
+    # additions, not conflicts across modules.
+    out-of-order: true
     locations: classpath:db/migration/common,classpath:db/migration/identity,classpath:db/migration/academic_structure,classpath:db/migration/sis,classpath:db/migration/staff,classpath:db/migration/attendance,classpath:db/migration/grading,classpath:db/migration/assessment,classpath:db/migration/assignments,classpath:db/migration/forum,classpath:db/migration/subject_board,classpath:db/migration/fees,classpath:db/migration/notifications,classpath:db/migration/documents,classpath:db/migration/reporting
   messages:
     basename: messages/messages
