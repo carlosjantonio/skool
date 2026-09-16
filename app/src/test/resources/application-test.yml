@@ -1,6 +1,11 @@
 spring:
   datasource:
-    url: jdbc:h2:mem:skool_test;MODE=PostgreSQL;DB_CLOSE_DELAY=-1
+    # NON_KEYWORDS=VALUE: H2 reserves VALUE, Postgres does not. The `grades` table has a
+    # `value` column (the 0–20 mark), so without this its CREATE TABLE fails — and
+    # Hibernate only logs schema failures as warnings, so the table would silently be
+    # missing and every grading test would fail with a confusing "table not found".
+    # SchemaIntegrityTest exists to catch a regression of exactly that.
+    url: jdbc:h2:mem:skool_test;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;NON_KEYWORDS=VALUE
     username: sa
     password:
     driver-class-name: org.h2.Driver
